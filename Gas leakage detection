@@ -1,0 +1,49 @@
+#include <SoftwareSerial.h>
+#include <Servo.h>
+
+Servo myservo;  // Create a servo object to control the motor
+SoftwareSerial mySerial(7, 8); // RX, TX pins for software serial communication (optional)
+
+int pos = 20;    // Variable to store servo position
+
+const int ledPin = 12;  // LED pin
+const int buzzerPin = 13; // Buzzer pin
+const int sensorPin = A0;  // LPG sensor analog pin
+
+int LPG_detected = 0;  // Variable to store sensor reading
+char msg = ' ';        // Variable to store a character (optional for serial communication)
+
+void setup() {
+  Serial.begin(9600);        // Start serial communication on Arduino's built-in port
+  mySerial.begin(9600);       // Start software serial communication (optional)
+  myservo.attach(11);         // Attach the servo motor to pin 11
+  pinMode(ledPin, OUTPUT);    // Set LED pin as output
+  pinMode(buzzerPin, OUTPUT); // Set buzzer pin as output
+  pinMode(sensorPin, INPUT);  // Set sensor pin as input
+  myservo.write(pos);          // Set initial servo position
+}
+
+void loop() {
+  LPG_detected = analogRead(sensorPin); // Read sensor value
+
+  // Adjust this threshold value based on your sensor and desired sensitivity
+  if (LPG_detected > 500) {  
+    LPG_detected = 1;        // Set flag if LPG is detected
+  } else {
+    LPG_detected = 0;
+  }
+
+  if (LPG_detected) {
+    digitalWrite(ledPin, HIGH);  // Turn on LED
+    tone(buzzerPin, 1000);       // Activate buzzer with 1kHz tone
+    myservo.write(90);           // Move servo to 90 degrees (optional)
+    // You can add additional actions here, like sending a message via software serial
+    // mySerial.print("LPG Leak Detected!");
+  } else {
+    digitalWrite(ledPin, LOW);   // Turn off LED
+    noTone(buzzerPin);           // Deactivate buzzer
+    myservo.write(pos);          // Move servo back to initial position (optional)
+  }
+
+  delay(500); // Add a delay between readings
+}
